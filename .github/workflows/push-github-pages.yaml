@@ -39,7 +39,7 @@ jobs:
         run: ./gradlew :app:assembleRelease
 
       - name: Copy APK over to get ready for upload
-        run: mv app/build/apk/outputs/release/app-release.apk github-pages/
+        run: mv app/build/outputs/apk/release/app-release.apk github-pages/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

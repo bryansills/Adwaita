@@ -1,9 +1,6 @@
 name: Deploy static content to Pages
 
 on:
-  push:
-    tags:
-      - '*.*.*'
   workflow_dispatch:
 
 permissions:
@@ -38,9 +35,11 @@ jobs:
         with:
           cache-disabled: true
 
-#      TODO: make signed release of the app and copy it over
-#      - name: Generate HTML for the static site
-#        run: ./gradlew :static-pages:run
+      - name: Generate HTML for the static site
+        run: ./gradlew :app:assembleRelease
+
+      - name: Copy APK over to get ready for upload
+        run: mv app/build/outputs/release/app-release.apk github-pages/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

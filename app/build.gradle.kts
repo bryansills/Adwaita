@@ -50,4 +50,5 @@ android {
 }
 
 dependencies {
+    implementation("com.android.support:appcompat-v7:25.4.0")
 }

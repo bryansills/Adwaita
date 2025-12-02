@@ -26,7 +26,7 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -35,8 +35,8 @@ android {
         }
         release {
             signingConfig = signingConfigs["debug"]
-            isShrinkResources = true
-            isMinifyEnabled = true
+//            isShrinkResources = true
+//            isMinifyEnabled = true // causes the app to crash on API 7???
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -13,6 +13,7 @@
         android.support.v7.appcompat"/>
 
     <application
+        android:name=".AdwaitaApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

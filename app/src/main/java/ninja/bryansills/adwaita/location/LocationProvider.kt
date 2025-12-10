@@ -13,37 +13,38 @@ import android.util.Log
 
 interface LocationProvider {
 
-    val hasPermission: Boolean
-
-    val requiredPermissions: Array<String>
+    val neededPermissions: Array<String>
 
     fun wasGrantedPermission(permissions: Array<out String?>, grantResults: IntArray): Boolean
 
-    fun addListener(listener: Listener)
+    fun addListener(tag: String, callback: (Location) -> Unit)
 
-    fun removeListener(listener: Listener)
-
-    interface Listener {
-        fun onLocationChanged(location: Location)
-    }
+    fun removeListener(tag: String)
 }
 
 class DefaultLocationProvider(
     private val locationManager: LocationManager,
     private val context: Context
 ) : LocationProvider {
-    private val currentListeners = mutableListOf<LocationProvider.Listener>()
+    private val currentListeners = mutableMapOf<String, (Location) -> Unit>()
 
     private var internalListener: LocationListener? = null
     private var lastLocation: Location? = null
 
-    override val hasPermission: Boolean
+    private val hasPermission: Boolean
         get() {
             val result = PermissionChecker.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
             return result == PERMISSION_GRANTED
         }
 
-    override val requiredPermissions: Array<String> = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+    override val neededPermissions: Array<String>
+        get() {
+            return if (!hasPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+            } else {
+                arrayOf()
+            }
+        }
 
     override fun wasGrantedPermission(
         permissions: Array<out String?>,
@@ -59,21 +60,21 @@ class DefaultLocationProvider(
         }
     }
 
-    override fun addListener(listener: LocationProvider.Listener) {
+    override fun addListener(tag: String, callback: (Location) -> Unit) {
         if (!hasPermission) {
             return // early exit!
         }
 
-        currentListeners.add(listener)
+        currentListeners[tag] = callback
 
         // if we already have the location, send it
-        lastLocation?.let { listener.onLocationChanged(it) }
+        lastLocation?.let { callback(it) }
 
         // start listening to the system if we aren't already
         if (internalListener == null) {
             val newInternalListener = LocationListener { newLocation ->
-                currentListeners.forEach {
-                    it.onLocationChanged(newLocation)
+                currentListeners.values.forEach { listener ->
+                    listener(newLocation)
                     lastLocation = newLocation
                 }
             }
@@ -95,12 +96,12 @@ class DefaultLocationProvider(
         }
     }
 
-    override fun removeListener(listener: LocationProvider.Listener) {
+    override fun removeListener(tag: String) {
         if (!hasPermission) {
             return // early exit!
         }
 
-        currentListeners.remove(listener)
+        currentListeners.remove(tag)
 
         if (currentListeners.isEmpty()) {
             internalListener?.let {

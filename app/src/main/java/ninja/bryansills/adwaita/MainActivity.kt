@@ -1,44 +1,46 @@
 package ninja.bryansills.adwaita
 
-import android.location.Location
-import android.os.Build
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.TextView
-import ninja.bryansills.adwaita.location.LocationProvider
 
 class MainActivity : AppCompatActivity() {
 
-    private var _locationProvider: LocationProvider? = null
-    private val locationProvider: LocationProvider
-        get() = checkNotNull(_locationProvider) {
-            "You're trying to get location data, but the UI isn't visible..."
+    private var _mainViewController: MainViewController? = null
+    private val mainViewController: MainViewController
+        get() = checkNotNull(_mainViewController) {
+            "You can only access the ViewController when the lifecycle state is CREATED or higher"
         }
 
-    private var locationListener: LocationProvider.Listener? = null
+    private var uiStateListener: ((MainUiState) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        _locationProvider = (this.application as AdwaitaApplication).locationProvider
+        _mainViewController = (this.application as AdwaitaApplication).viewControllerStore.get()
 
-        if (!locationProvider.hasPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (mainViewController.neededPermissions.isNotEmpty()) {
             requestPermissions(
-                locationProvider.requiredPermissions,
-                LocationRequestCode
+                mainViewController.neededPermissions,
+                PERMISSION_REQUEST_CODE
             )
         } else {
-            listenToLocation()
+            listenToUiState()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        locationListener?.let { locationProvider.removeListener(it) }
-        locationListener = null
-        _locationProvider = null
+
+        mainViewController.stopListening(TAG)
+        uiStateListener = null
+
+        if (isFinishing) {
+            (this.application as AdwaitaApplication).viewControllerStore.remove(MainViewController::class.java)
+        }
+        _mainViewController = null
     }
 
     override fun onRequestPermissionsResult(
@@ -47,9 +49,9 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray,
     ) {
         when (requestCode) {
-            LocationRequestCode -> {
-                if (locationProvider.wasGrantedPermission(permissions, grantResults)) {
-                    listenToLocation()
+            PERMISSION_REQUEST_CODE -> {
+                if (mainViewController.wasGrantedPermission(permissions, grantResults)) {
+                    listenToUiState()
                 } else {
                     Log.w("BLARG", "User doesn't want us to see their location")
                 }
@@ -60,18 +62,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun listenToLocation() {
-        val newListener = object : LocationProvider.Listener {
-            override fun onLocationChanged(location: Location) {
-                val mainText = findViewById(R.id.hello_world) as TextView
-                mainText.text = "${location.latitude}, ${location.longitude}"
-            }
+    private fun listenToUiState() {
+        val newUiStateListener = { uiState: MainUiState ->
+            updateUi(uiState)
         }
-        locationProvider.addListener(newListener)
-        locationListener = newListener
+        mainViewController.listenToUiState(TAG, newUiStateListener)
+        uiStateListener = newUiStateListener
+    }
+
+    private fun updateUi(uiState: MainUiState) {
+        val mainText = findViewById(R.id.hello_world) as TextView
+        mainText.text = when (uiState) {
+            is MainUiState.LocationFound -> {
+                "${uiState.latitude}, ${uiState.longitude}"
+            }
+            MainUiState.WaitingForPermission -> "still loading"
+        }
     }
 
     companion object {
-        private const val LocationRequestCode = 123567
+        private val TAG = MainActivity::class.java.name
+        private const val PERMISSION_REQUEST_CODE = 123567
     }
 }

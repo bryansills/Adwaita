@@ -5,19 +5,19 @@ import android.content.Context
 import android.location.LocationManager
 import androidx.multidex.MultiDex
 import ninja.bryansills.adwaita.location.DefaultLocationProvider
-import ninja.bryansills.adwaita.location.LocationProvider
 
 class AdwaitaApplication : Application() {
-
-    lateinit var locationProvider: LocationProvider
+    lateinit var viewControllerStore: ViewControllerStore
 
     override fun onCreate() {
         super.onCreate()
 
-        locationProvider = DefaultLocationProvider(
+        val locationProvider = DefaultLocationProvider(
             this.getSystemService(LOCATION_SERVICE) as LocationManager,
             this
         )
+        val viewControllerFactory = ViewControllerFactory(locationProvider)
+        viewControllerStore = ViewControllerStore(viewControllerFactory)
     }
 
     override fun attachBaseContext(base: Context?) {

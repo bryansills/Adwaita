@@ -2,7 +2,6 @@ package ninja.bryansills.adwaita
 
 import android.location.Location
 import android.util.Log
-import ninja.bryansills.adwaita.location.LocationProvider
 import kotlin.concurrent.thread
 
 class MainViewController(private val locationProvider: LocationProvider) : ViewController {

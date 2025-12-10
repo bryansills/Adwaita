@@ -1,7 +1,5 @@
 package ninja.bryansills.adwaita
 
-import ninja.bryansills.adwaita.location.LocationProvider
-
 interface ViewController {
     fun onCleared() {}
 }

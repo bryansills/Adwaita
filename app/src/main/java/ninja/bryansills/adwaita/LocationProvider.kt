@@ -1,4 +1,4 @@
-package ninja.bryansills.adwaita.location
+package ninja.bryansills.adwaita
 
 import android.Manifest
 import android.content.Context

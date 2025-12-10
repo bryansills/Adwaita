@@ -1,0 +1,83 @@
+{
+  "current": {
+    "temp": 32,
+    "feels_like": 16,
+    "daily_high": 39,
+    "daily_low": 24,
+    "code": "clear"
+  },
+  "hourly": [
+    {
+      "offset_hour": 1,
+      "temp": 31,
+      "precipitation_chance": 0,
+      "code": "mainly clear"
+    },
+    {
+      "offset_hour": 2,
+      "temp": 33,
+      "precipitation_chance": 0,
+      "code": "partly cloudy"
+    },
+    {
+      "offset_hour": 3,
+      "temp": 33,
+      "precipitation_chance": 10,
+      "code": "light freezing drizzle"
+    },
+    {
+      "offset_hour": 4,
+      "temp": 31,
+      "precipitation_chance": 25,
+      "code": "light freezing rain"
+    },
+    {
+      "offset_hour": 5,
+      "temp": 28,
+      "precipitation_chance": 40,
+      "code": "light snow"
+    },
+    {
+      "offset_hour": 6,
+      "temp": 27,
+      "precipitation_chance": 70,
+      "code": "moderate snow"
+    },
+    {
+      "offset_hour": 7,
+      "temp": 26,
+      "precipitation_chance": 100,
+      "code": "heavy snow"
+    },
+    {
+      "offset_hour": 8,
+      "temp": 26,
+      "precipitation_chance": 80,
+      "code": "moderate snow"
+    },
+    {
+      "offset_hour": 9,
+      "temp": 25,
+      "precipitation_chance": 30,
+      "code": "slight snow"
+    },
+    {
+      "offset_hour": 10,
+      "temp": 25,
+      "precipitation_chance": 0,
+      "code": "partly cloudy"
+    },
+    {
+      "offset_hour": 11,
+      "temp": 24,
+      "precipitation_chance": 0,
+      "code": "mainly clear"
+    },
+    {
+      "offset_hour": 12,
+      "temp": 24,
+      "precipitation_chance": 0,
+      "code": "clear sky"
+    }
+  ]
+}

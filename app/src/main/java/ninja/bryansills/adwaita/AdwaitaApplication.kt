@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.location.LocationManager
 import androidx.multidex.MultiDex
-import ninja.bryansills.adwaita.location.DefaultLocationProvider
 
 class AdwaitaApplication : Application() {
     lateinit var viewControllerStore: ViewControllerStore

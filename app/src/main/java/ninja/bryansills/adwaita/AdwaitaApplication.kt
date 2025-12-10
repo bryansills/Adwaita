@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.location.LocationManager
 import androidx.multidex.MultiDex
+import com.google.gson.Gson
+import com.squareup.okhttp.OkHttpClient
 
 class AdwaitaApplication : Application() {
     lateinit var viewControllerStore: ViewControllerStore
@@ -11,11 +13,16 @@ class AdwaitaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val locationProvider = DefaultLocationProvider(
-            this.getSystemService(LOCATION_SERVICE) as LocationManager,
-            this
+        val viewControllerFactory = ViewControllerFactory(
+            locationProvider = DefaultLocationProvider(
+                this.getSystemService(LOCATION_SERVICE) as LocationManager,
+                this
+            ),
+            weatherService = DefaultWeatherService(
+                okHttpClient = OkHttpClient(),
+                gson = Gson()
+            )
         )
-        val viewControllerFactory = ViewControllerFactory(locationProvider)
         viewControllerStore = ViewControllerStore(viewControllerFactory)
     }
 

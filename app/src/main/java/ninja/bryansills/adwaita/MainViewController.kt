@@ -4,7 +4,10 @@ import android.location.Location
 import android.util.Log
 import kotlin.concurrent.thread
 
-class MainViewController(private val locationProvider: LocationProvider) : ViewController {
+class MainViewController(
+    private val locationProvider: LocationProvider,
+    private val weatherService: WeatherService
+) : ViewController {
     val neededPermissions: Array<String>
         get() = locationProvider.neededPermissions
 
@@ -25,12 +28,22 @@ class MainViewController(private val locationProvider: LocationProvider) : ViewC
 
         if (locationCallback == null) {
             val newLocationCallback = { newLocation: Location ->
+                val latitude = newLocation.latitude.toInt()
+                val longitude = newLocation.longitude.toInt()
+
                 currentUiState = MainUiState.LocationFound(
-                    latitude = newLocation.latitude.toInt(),
-                    longitude = newLocation.longitude.toInt()
+                    latitude = latitude,
+                    longitude = longitude
                 )
                 currentListeners.values.forEach { listener ->
                     listener(currentUiState)
+                }
+
+                weatherService.getForecast(
+                    latitude = latitude,
+                    longitude = longitude
+                ) { response ->
+                    Log.d("BLARG", "Hey the ViewController has the response: $response")
                 }
             }
             locationProvider.addListener(tag, newLocationCallback)

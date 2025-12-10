@@ -22,10 +22,13 @@ inline fun <reified VC : ViewController> ViewControllerStore.get(): VC {
     return this.get(VC::class.java)
 }
 
-class ViewControllerFactory(private val locationProvider: LocationProvider) {
+class ViewControllerFactory(
+    private val locationProvider: LocationProvider,
+    private val weatherService: WeatherService
+) {
     fun <VC : ViewController> create(clazz: Class<VC>): VC {
         return when (clazz) {
-            MainViewController::class.java -> MainViewController(locationProvider)
+            MainViewController::class.java -> MainViewController(locationProvider, weatherService)
             else -> throw IllegalArgumentException("Cannot create ViewController for ${clazz.name}")
         } as VC
     }

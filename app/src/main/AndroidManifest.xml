@@ -13,6 +13,7 @@
         android.support.v7.appcompat"/>
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".AdwaitaApplication"

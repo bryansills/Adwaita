@@ -21,37 +21,44 @@ class MainViewController(
 
     private var locationCallback: ((Location) -> Unit)? = null
 
-    fun listenToUiState(tag: String, callback: (MainUiState) -> Unit) {
+    fun registerToUiState(tag: String, callback: (MainUiState) -> Unit) {
         currentListeners[tag] = callback
 
         callback(currentUiState)
 
         if (locationCallback == null) {
-            val newLocationCallback = { newLocation: Location ->
-                val latitude = newLocation.latitude.toInt()
-                val longitude = newLocation.longitude.toInt()
+            val newLocationCallback = { newLocation: Location? ->
+                if (newLocation != null) {
+                    val latitude = newLocation.latitude.toInt()
+                    val longitude = newLocation.longitude.toInt()
 
-                currentUiState = MainUiState.LocationFound(
-                    latitude = latitude,
-                    longitude = longitude
-                )
-                currentListeners.values.forEach { listener ->
-                    listener(currentUiState)
-                }
+                    currentUiState = MainUiState.LocationFound(
+                        latitude = latitude,
+                        longitude = longitude
+                    )
+                    currentListeners.values.forEach { listener ->
+                        listener(currentUiState)
+                    }
 
-                weatherService.getForecast(
-                    latitude = latitude,
-                    longitude = longitude
-                ) { response ->
-                    Log.d("BLARG", "Hey the ViewController has the response: $response")
+                    weatherService.getForecast(
+                        latitude = latitude,
+                        longitude = longitude
+                    ) { response ->
+                        Log.d("BLARG", "Hey the ViewController has the response: $response")
+                    }
+                } else {
+                    currentUiState = MainUiState.CannotGetLocation
+                    currentListeners.values.forEach { listener ->
+                        listener(currentUiState)
+                    }
                 }
             }
-            locationProvider.addListener(tag, newLocationCallback)
+            locationProvider.getCurrentLocation(TAG, newLocationCallback)
             locationCallback = newLocationCallback
         }
     }
 
-    fun stopListening(tag: String) {
+    fun unregisterToUiState(tag: String) {
         currentListeners.remove(tag)
 
         if (currentListeners.isEmpty() && locationCallback != null) {
@@ -60,7 +67,7 @@ class MainViewController(
 
                 // double check that there are still no listeners
                 if (currentListeners.isEmpty() && locationCallback != null) {
-                    locationProvider.removeListener(tag)
+                    locationProvider.cancelRequest(TAG)
                     locationCallback = null
                 } else {
                     Log.d("BLARG", "I guess someone started listening again before the 5 second timeout")
@@ -76,7 +83,7 @@ class MainViewController(
         currentListeners.clear()
 
         if (locationCallback != null) {
-            locationProvider.removeListener(TAG)
+            locationProvider.cancelRequest(TAG)
             locationCallback = null
         }
     }
@@ -88,6 +95,8 @@ class MainViewController(
 
 sealed interface MainUiState {
     data object WaitingForPermission : MainUiState
+
+    data object CannotGetLocation : MainUiState
 
     data class LocationFound(val latitude: Int, val longitude: Int) : MainUiState
 }

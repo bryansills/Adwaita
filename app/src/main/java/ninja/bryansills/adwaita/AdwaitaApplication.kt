@@ -6,6 +6,7 @@ import android.location.LocationManager
 import androidx.multidex.MultiDex
 import com.google.gson.Gson
 import com.squareup.okhttp.OkHttpClient
+import java.util.concurrent.Executors
 
 class AdwaitaApplication : Application() {
     lateinit var viewControllerStore: ViewControllerStore
@@ -16,7 +17,8 @@ class AdwaitaApplication : Application() {
         val viewControllerFactory = ViewControllerFactory(
             locationProvider = DefaultLocationProvider(
                 this.getSystemService(LOCATION_SERVICE) as LocationManager,
-                this
+                this,
+                Executors.newSingleThreadExecutor()
             ),
             weatherService = DefaultWeatherService(
                 okHttpClient = OkHttpClient(),

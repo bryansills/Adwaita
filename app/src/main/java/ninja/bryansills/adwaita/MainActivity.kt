@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        mainViewController.stopListening(TAG)
+        mainViewController.unregisterToUiState(TAG)
         uiStateListener = null
 
         if (isFinishing) {
@@ -64,19 +64,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun listenToUiState() {
         val newUiStateListener = { uiState: MainUiState ->
-            updateUi(uiState)
+            runOnUiThread {
+                updateUi(uiState)
+            }
         }
-        mainViewController.listenToUiState(TAG, newUiStateListener)
+        mainViewController.registerToUiState(TAG, newUiStateListener)
         uiStateListener = newUiStateListener
     }
 
     private fun updateUi(uiState: MainUiState) {
         val mainText = findViewById(R.id.hello_world) as TextView
         mainText.text = when (uiState) {
+            MainUiState.WaitingForPermission -> "still loading"
+            MainUiState.CannotGetLocation -> "cannot get location"
             is MainUiState.LocationFound -> {
                 "${uiState.latitude}, ${uiState.longitude}"
             }
-            MainUiState.WaitingForPermission -> "still loading"
         }
     }
 

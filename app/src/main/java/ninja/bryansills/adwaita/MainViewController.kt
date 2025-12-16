@@ -2,11 +2,16 @@ package ninja.bryansills.adwaita
 
 import android.location.Location
 import android.util.Log
-import kotlin.concurrent.thread
+import androidx.core.os.CancellationSignal
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Future
 
 class MainViewController(
     private val locationProvider: LocationProvider,
-    private val weatherService: WeatherService
+    private val weatherService: WeatherService,
+    private val backgroundExecutor: ExecutorService,
+    private val mainThreadExecutor: Executor,
 ) : ViewController {
     val neededPermissions: Array<String>
         get() = locationProvider.neededPermissions
@@ -19,58 +24,54 @@ class MainViewController(
 
     private val currentListeners = mutableMapOf<String, (MainUiState) -> Unit>()
 
-    private var locationCallback: ((Location) -> Unit)? = null
+
+    private var forecastWork: Future<*>? = null
+    private var cancellationSignal: CancellationSignal? = null
 
     fun registerToUiState(tag: String, callback: (MainUiState) -> Unit) {
         currentListeners[tag] = callback
-
         callback(currentUiState)
-
-        if (locationCallback == null) {
-            val newLocationCallback = { newLocation: Location? ->
-                if (newLocation != null) {
-                    val latitude = newLocation.latitude.toInt()
-                    val longitude = newLocation.longitude.toInt()
-
-                    currentUiState = MainUiState.LocationFound(
-                        latitude = latitude,
-                        longitude = longitude
-                    )
-                    currentListeners.values.forEach { listener ->
-                        listener(currentUiState)
-                    }
-
-                    weatherService.getForecast(
-                        latitude = latitude,
-                        longitude = longitude
-                    ) { response ->
-                        Log.d("BLARG", "Hey the ViewController has the response: $response")
-                    }
-                } else {
-                    currentUiState = MainUiState.CannotGetLocation
-                    currentListeners.values.forEach { listener ->
-                        listener(currentUiState)
-                    }
-                }
-            }
-            locationProvider.getCurrentLocation(TAG, newLocationCallback)
-            locationCallback = newLocationCallback
-        }
     }
 
     fun unregisterToUiState(tag: String) {
         currentListeners.remove(tag)
+    }
 
-        if (currentListeners.isEmpty() && locationCallback != null) {
-            thread {
-                Thread.sleep(5_000)
+    fun requestForecast() {
+        if (forecastWork == null) {
+            forecastWork = backgroundExecutor.submit {
+                val newCancellationSignal = CancellationSignal()
+                cancellationSignal = newCancellationSignal
 
-                // double check that there are still no listeners
-                if (currentListeners.isEmpty() && locationCallback != null) {
-                    locationProvider.cancelRequest(TAG)
-                    locationCallback = null
-                } else {
-                    Log.d("BLARG", "I guess someone started listening again before the 5 second timeout")
+                locationProvider.getCurrentLocation(TAG) { newLocation: Location? ->
+                    if (newLocation != null) {
+                        val latitude = newLocation.latitude.toInt()
+                        val longitude = newLocation.longitude.toInt()
+
+                        updateUiState {
+                            MainUiState.LocationFound(
+                                latitude = latitude,
+                                longitude = longitude
+                            )
+                        }
+
+                        if (newCancellationSignal.isCanceled) {
+                            Log.d("BLARG", "ViewController got cleared before all the work was done. Canceling before making the network request.")
+                            return@getCurrentLocation
+                        }
+
+                        weatherService.getForecast(
+                            latitude = latitude,
+                            longitude = longitude
+                        ) { response ->
+                            Log.d("BLARG", "Hey the ViewController has the response: $response")
+                            updateUiState {
+                                MainUiState.ForecastFound(response)
+                            }
+                        }
+                    } else {
+                        updateUiState { MainUiState.CannotGetLocation }
+                    }
                 }
             }
         }
@@ -81,10 +82,20 @@ class MainViewController(
         Log.d("BLARG", "Clearing MainViewController")
 
         currentListeners.clear()
+        locationProvider.cancelRequest(TAG) // cancel location request if it is still in flight
 
-        if (locationCallback != null) {
-            locationProvider.cancelRequest(TAG)
-            locationCallback = null
+        cancellationSignal?.cancel()
+        cancellationSignal = null
+        forecastWork = null
+    }
+
+    private fun updateUiState(onUpdate: (MainUiState) -> MainUiState) {
+        mainThreadExecutor.execute {
+            val newUiState = onUpdate(currentUiState)
+            currentListeners.values.forEach { listener ->
+                listener(newUiState)
+            }
+            currentUiState = newUiState
         }
     }
 
@@ -99,4 +110,6 @@ sealed interface MainUiState {
     data object CannotGetLocation : MainUiState
 
     data class LocationFound(val latitude: Int, val longitude: Int) : MainUiState
+
+    data class ForecastFound(val forecast: WeatherResponse) : MainUiState
 }

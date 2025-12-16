@@ -27,8 +27,14 @@ class MainActivity : AppCompatActivity() {
                 PERMISSION_REQUEST_CODE
             )
         } else {
-            listenToUiState()
+            mainViewController.requestForecast()
         }
+
+        val newUiStateListener = { uiState: MainUiState ->
+            updateUi(uiState)
+        }
+        mainViewController.registerToUiState(TAG, newUiStateListener)
+        uiStateListener = newUiStateListener
     }
 
     override fun onDestroy() {
@@ -51,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
                 if (mainViewController.wasGrantedPermission(permissions, grantResults)) {
-                    listenToUiState()
+                    mainViewController.requestForecast()
                 } else {
                     Log.w("BLARG", "User doesn't want us to see their location")
                 }
@@ -62,16 +68,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun listenToUiState() {
-        val newUiStateListener = { uiState: MainUiState ->
-            runOnUiThread {
-                updateUi(uiState)
-            }
-        }
-        mainViewController.registerToUiState(TAG, newUiStateListener)
-        uiStateListener = newUiStateListener
-    }
-
     private fun updateUi(uiState: MainUiState) {
         val mainText = findViewById(R.id.hello_world) as TextView
         mainText.text = when (uiState) {
@@ -79,6 +75,9 @@ class MainActivity : AppCompatActivity() {
             MainUiState.CannotGetLocation -> "cannot get location"
             is MainUiState.LocationFound -> {
                 "${uiState.latitude}, ${uiState.longitude}"
+            }
+            is MainUiState.ForecastFound -> {
+                "forecast: ${uiState.forecast}"
             }
         }
     }

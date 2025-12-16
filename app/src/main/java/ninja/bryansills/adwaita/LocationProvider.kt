@@ -121,7 +121,7 @@ class DefaultLocationProvider(
 
         currentListeners.remove(tag)
 
-        if (currentListeners.isEmpty() && internalCancellationSignal?.isCanceled == true) {
+        if (currentListeners.isEmpty()) {
             internalCancellationSignal?.cancel()
             internalCancellationSignal = null
             internalLocationConsumer = null

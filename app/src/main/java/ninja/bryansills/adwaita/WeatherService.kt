@@ -20,6 +20,7 @@ class DefaultWeatherService(
         longitude: Int,
         callback: (WeatherResponse) -> Unit
     ) {
+        // TODO: use executors
         thread {
             val connection = okHttpClient.open(formatUrl(latitude, longitude))
             val inputStreamReader = InputStreamReader(connection.getInputStream())

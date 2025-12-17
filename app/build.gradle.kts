@@ -63,4 +63,5 @@ dependencies {
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("com.squareup.okhttp:okhttp:1.6.0")
     implementation("com.google.code.gson:gson:2.8.9")
+    implementation("com.google.android.gms:play-services-location:10.0.1")
 }

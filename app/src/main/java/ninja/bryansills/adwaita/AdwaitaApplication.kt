@@ -5,6 +5,8 @@ import android.content.Context
 import android.location.LocationManager
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import androidx.core.os.CancellationSignal
 import androidx.core.os.ExecutorCompat
 import androidx.multidex.MultiDex
 import com.google.gson.Gson
@@ -18,6 +20,12 @@ class AdwaitaApplication : Application() {
         super.onCreate()
 
         val backgroundExecutor = Executors.newCachedThreadPool()
+        val locationServices = DefaultLocationServices(this, backgroundExecutor)
+        Log.d("BLARG", "location services ${locationServices.isConnected}")
+        locationServices.getLastLocation(CancellationSignal()) { location ->
+            Log.d("BLARG", "got a location $location")
+
+        }
         val viewControllerFactory = ViewControllerFactory(
             locationProvider = DefaultLocationProvider(
                 this.getSystemService(LOCATION_SERVICE) as LocationManager,

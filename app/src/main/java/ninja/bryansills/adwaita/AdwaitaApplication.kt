@@ -3,6 +3,9 @@ package ninja.bryansills.adwaita
 import android.app.Application
 import android.content.Context
 import android.location.LocationManager
+import android.os.Handler
+import android.os.Looper
+import androidx.core.os.ExecutorCompat
 import androidx.multidex.MultiDex
 import com.google.gson.Gson
 import com.squareup.okhttp.OkHttpClient
@@ -14,6 +17,7 @@ class AdwaitaApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        val backgroundExecutor = Executors.newCachedThreadPool()
         val viewControllerFactory = ViewControllerFactory(
             locationProvider = DefaultLocationProvider(
                 this.getSystemService(LOCATION_SERVICE) as LocationManager,
@@ -22,8 +26,11 @@ class AdwaitaApplication : Application() {
             ),
             weatherService = DefaultWeatherService(
                 okHttpClient = OkHttpClient(),
-                gson = Gson()
-            )
+                gson = Gson(),
+                executor = backgroundExecutor
+            ),
+            backgroundExecutor = backgroundExecutor,
+            mainThreadExecutor = ExecutorCompat.create(Handler(Looper.getMainLooper()))
         )
         viewControllerStore = ViewControllerStore(viewControllerFactory)
     }

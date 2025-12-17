@@ -79,6 +79,9 @@ class MainActivity : AppCompatActivity() {
             is MainUiState.ForecastFound -> {
                 "forecast: ${uiState.forecast}"
             }
+            is MainUiState.NetworkRequestFailed -> {
+                "network request failed because ${uiState.exception.message}"
+            }
         }
     }
 

@@ -1,9 +1,7 @@
 package ninja.bryansills.adwaita
 
-import android.os.Handler
-import android.os.Looper
-import androidx.core.os.ExecutorCompat
-import java.util.concurrent.Executors
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 
 interface ViewController {
     fun onCleared() {}
@@ -29,7 +27,9 @@ inline fun <reified VC : ViewController> ViewControllerStore.get(): VC {
 
 class ViewControllerFactory(
     private val locationProvider: LocationProvider,
-    private val weatherService: WeatherService
+    private val weatherService: WeatherService,
+    private val backgroundExecutor: ExecutorService,
+    private val mainThreadExecutor: Executor
 ) {
     fun <VC : ViewController> create(clazz: Class<VC>): VC {
         return when (clazz) {
@@ -37,8 +37,8 @@ class ViewControllerFactory(
                 MainViewController(
                     locationProvider = locationProvider,
                     weatherService = weatherService,
-                    backgroundExecutor = Executors.newCachedThreadPool(),
-                    mainThreadExecutor = ExecutorCompat.create(Handler(Looper.getMainLooper()))
+                    backgroundExecutor = backgroundExecutor,
+                    mainThreadExecutor = mainThreadExecutor
                 )
             }
             else -> throw IllegalArgumentException("Cannot create ViewController for ${clazz.name}")

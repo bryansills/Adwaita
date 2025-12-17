@@ -65,9 +65,15 @@ class MainViewController(
                             longitude = longitude
                         ) { response ->
                             Log.d("BLARG", "Hey the ViewController has the response: $response")
-                            updateUiState {
-                                MainUiState.ForecastFound(response)
-                            }
+
+                            response.fold(
+                                onSuccess = { forecast ->
+                                    updateUiState { MainUiState.ForecastFound(forecast) }
+                                },
+                                onFailure = { exception ->
+                                    updateUiState { MainUiState.NetworkRequestFailed(exception) }
+                                }
+                            )
                         }
                     } else {
                         updateUiState { MainUiState.CannotGetLocation }
@@ -112,4 +118,6 @@ sealed interface MainUiState {
     data class LocationFound(val latitude: Int, val longitude: Int) : MainUiState
 
     data class ForecastFound(val forecast: WeatherResponse) : MainUiState
+
+    data class NetworkRequestFailed(val exception: Throwable) : MainUiState
 }

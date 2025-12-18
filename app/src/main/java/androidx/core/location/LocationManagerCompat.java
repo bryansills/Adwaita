@@ -34,6 +34,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.RequiresPermission;
+import android.util.Log;
 
 import androidx.core.os.CancellationSignal;
 
@@ -151,6 +152,7 @@ public class LocationManagerCompat {
 
         @RequiresPermission(anyOf = {ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION})
         public void cancel() {
+            Log.d("BLARG", "Canceling listener");
             synchronized (this) {
                 if (mTriggered) {
                     return;
@@ -172,6 +174,7 @@ public class LocationManagerCompat {
                 // to deal with translating pending intent alarms into listeners which doesn't exist
                 // at the moment, so this should be sufficient to prevent extreme battery drain
                 mTimeoutRunnable = () -> {
+                    Log.d("BLARG", "Timed out!");
                     mTimeoutRunnable = null;
                     onLocationChanged((Location) null);
                 };
@@ -194,6 +197,7 @@ public class LocationManagerCompat {
         @RequiresPermission(anyOf = {ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION})
         @Override
         public void onLocationChanged(final @Nullable Location location) {
+            Log.d("BLARG", "Got a location in the listener");
             synchronized (this) {
                 if (mTriggered) {
                     return;

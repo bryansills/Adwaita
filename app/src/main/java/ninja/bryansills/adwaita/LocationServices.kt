@@ -221,15 +221,21 @@ class AospLocationServices(
         cancellationSignal.setOnCancelListener {
             internalCancellationSignals.forEach { it.cancel() }
         }
+        var internalCancellationCount = 0
 
         val internalConsumer = Consumer<Location?> { newLocation ->
+            Log.d("BLARG", "Got a new location $newLocation")
             if (newLocation != null) {
                 callback(newLocation)
                 internalCancellationSignals.forEach { it.cancel() }
-            } else if (internalCancellationSignals.all { it.isCanceled }) {
-                callback(newLocation)
             } else {
-                // newLocation is null, but all attempts have not timed out... yet.
+                internalCancellationCount++
+                Log.d("BLARG", "Null emitted $internalCancellationCount times")
+
+                if (internalCancellationCount == bestProviders.size) {
+                    Log.d("BLARG", "Giving up")
+                    callback(null)
+                }
             }
         }
 

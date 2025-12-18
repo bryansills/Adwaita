@@ -8,16 +8,16 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
 class MainViewController(
-    private val locationProvider: LocationProvider,
+    private val locationServices: LocationServices,
     private val weatherService: WeatherService,
     private val backgroundExecutor: ExecutorService,
     private val mainThreadExecutor: Executor,
 ) : ViewController {
     val neededPermissions: Array<String>
-        get() = locationProvider.neededPermissions
+        get() = locationServices.neededPermissions
 
     fun wasGrantedPermission(permissions: Array<out String?>, grantResults: IntArray): Boolean {
-        return locationProvider.wasGrantedPermission(permissions, grantResults)
+        return locationServices.wasGrantedPermission(permissions, grantResults)
     }
 
     private var currentUiState: MainUiState = MainUiState.WaitingForPermission
@@ -43,7 +43,7 @@ class MainViewController(
                 val newCancellationSignal = CancellationSignal()
                 cancellationSignal = newCancellationSignal
 
-                locationProvider.getCurrentLocation(TAG) { newLocation: Location? ->
+                locationServices.getLastLocation(newCancellationSignal) { newLocation: Location? ->
                     if (newLocation != null) {
                         val latitude = newLocation.latitude.toInt()
                         val longitude = newLocation.longitude.toInt()
@@ -57,7 +57,7 @@ class MainViewController(
 
                         if (newCancellationSignal.isCanceled) {
                             Log.d("BLARG", "ViewController got cleared before all the work was done. Canceling before making the network request.")
-                            return@getCurrentLocation
+                            return@getLastLocation
                         }
 
                         weatherService.getForecast(
@@ -88,7 +88,6 @@ class MainViewController(
         Log.d("BLARG", "Clearing MainViewController")
 
         currentListeners.clear()
-        locationProvider.cancelRequest(TAG) // cancel location request if it is still in flight
 
         cancellationSignal?.cancel()
         cancellationSignal = null

@@ -1,14 +1,9 @@
 package ninja.bryansills.adwaita
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.SystemClock
-import android.support.v4.content.PermissionChecker
-import android.support.v4.content.PermissionChecker.PERMISSION_GRANTED
 import android.util.Log
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.CancellationSignal
@@ -16,11 +11,7 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-interface LocationProvider {
-
-    val neededPermissions: Array<String>
-
-    fun wasGrantedPermission(permissions: Array<out String?>, grantResults: IntArray): Boolean
+interface LocationProvider : LocationPermissions {
 
     fun getCurrentLocation(tag: String, callback: (Location?) -> Unit)
 
@@ -29,8 +20,8 @@ interface LocationProvider {
 
 class DefaultLocationProvider(
     private val locationManager: LocationManager,
-    private val context: Context,
-    private val executor: Executor
+    private val executor: Executor,
+    private val locationPermissions: LocationPermissions
 ) : LocationProvider {
     private val currentListeners = mutableMapOf<String, (Location?) -> Unit>()
 
@@ -38,33 +29,17 @@ class DefaultLocationProvider(
     private var internalLocationConsumer: Consumer<Location?>? = null
     private var lastLocation: Location? = null
 
-    private val hasPermission: Boolean
-        get() {
-            val result = PermissionChecker.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-            return result == PERMISSION_GRANTED
-        }
+    override val hasPermission: Boolean
+        get() = locationPermissions.hasPermission
 
     override val neededPermissions: Array<String>
-        get() {
-            return if (!hasPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-            } else {
-                arrayOf()
-            }
-        }
+        get() = locationPermissions.neededPermissions
 
     override fun wasGrantedPermission(
         permissions: Array<out String?>,
         grantResults: IntArray
     ): Boolean {
-        val locationIndex = permissions.indexOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-
-        return if (locationIndex >= 0) {
-            val grantResult = grantResults[locationIndex]
-            grantResult == PackageManager.PERMISSION_GRANTED
-        } else {
-            false
-        }
+        return locationPermissions.wasGrantedPermission(permissions, grantResults)
     }
 
     override fun getCurrentLocation(tag: String, callback: (Location?) -> Unit) {

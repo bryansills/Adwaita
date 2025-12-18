@@ -3,10 +3,9 @@ package ninja.bryansills.adwaita
 import android.app.Application
 import android.content.Context
 import android.location.LocationManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import androidx.core.os.CancellationSignal
 import androidx.core.os.ExecutorCompat
 import androidx.multidex.MultiDex
 import com.google.gson.Gson
@@ -20,25 +19,28 @@ class AdwaitaApplication : Application() {
         super.onCreate()
 
         val backgroundExecutor = Executors.newCachedThreadPool()
-        val locationServices = DefaultLocationServices(this, backgroundExecutor)
-        Log.d("BLARG", "location services ${locationServices.isConnected}")
-        locationServices.getLastLocation(CancellationSignal()) { location ->
-            Log.d("BLARG", "got a location $location")
+        val mainThreadExecutor = ExecutorCompat.create(Handler(Looper.getMainLooper()))
 
+        val locationPermissions: LocationPermissions = DefaultLocationPermissions(this)
+        val locationServices: LocationServices = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            PlayServicesLocationServices(this, mainThreadExecutor, locationPermissions)
+        } else {
+            AospLocationServices(
+                locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager,
+                executor = mainThreadExecutor,
+                locationPermissions = locationPermissions
+            )
         }
+
         val viewControllerFactory = ViewControllerFactory(
-            locationProvider = DefaultLocationProvider(
-                this.getSystemService(LOCATION_SERVICE) as LocationManager,
-                this,
-                Executors.newSingleThreadExecutor()
-            ),
+            locationServices = locationServices,
             weatherService = DefaultWeatherService(
                 okHttpClient = OkHttpClient(),
                 gson = Gson(),
                 executor = backgroundExecutor
             ),
             backgroundExecutor = backgroundExecutor,
-            mainThreadExecutor = ExecutorCompat.create(Handler(Looper.getMainLooper()))
+            mainThreadExecutor = mainThreadExecutor
         )
         viewControllerStore = ViewControllerStore(viewControllerFactory)
     }

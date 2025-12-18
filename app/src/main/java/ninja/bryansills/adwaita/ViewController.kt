@@ -26,7 +26,7 @@ inline fun <reified VC : ViewController> ViewControllerStore.get(): VC {
 }
 
 class ViewControllerFactory(
-    private val locationProvider: LocationProvider,
+    private val locationServices: LocationServices,
     private val weatherService: WeatherService,
     private val backgroundExecutor: ExecutorService,
     private val mainThreadExecutor: Executor
@@ -35,7 +35,7 @@ class ViewControllerFactory(
         return when (clazz) {
             MainViewController::class.java -> {
                 MainViewController(
-                    locationProvider = locationProvider,
+                    locationServices = locationServices,
                     weatherService = weatherService,
                     backgroundExecutor = backgroundExecutor,
                     mainThreadExecutor = mainThreadExecutor

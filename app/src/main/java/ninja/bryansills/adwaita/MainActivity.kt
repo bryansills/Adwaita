@@ -3,9 +3,12 @@ package ninja.bryansills.adwaita
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.widget.TextView
+import android.view.View
+import ninja.bryansills.adwaita.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
 
     private var _mainViewController: MainViewController? = null
     private val mainViewController: MainViewController
@@ -17,7 +20,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         _mainViewController = (this.application as AdwaitaApplication).viewControllerStore.get()
 
@@ -69,18 +73,41 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUi(uiState: MainUiState) {
-        val mainText = findViewById(R.id.hello_world) as TextView
-        mainText.text = when (uiState) {
-            MainUiState.WaitingForPermission -> "still loading"
-            MainUiState.CannotGetLocation -> "cannot get location"
-            is MainUiState.LocationFound -> {
-                "${uiState.latitude}, ${uiState.longitude}"
+        when (uiState) {
+            MainUiState.WaitingForPermission -> {
+                binding.errorView.visibility = View.GONE
+                binding.forecastView.root.visibility = View.GONE
+
+                binding.inProgressView.visibility = View.VISIBLE
+                binding.inProgressText.text = "we need permission to access the user's location"
+
             }
-            is MainUiState.ForecastFound -> {
-                "forecast: ${uiState.forecast}"
+            is MainUiState.LocationFound -> {
+                binding.errorView.visibility = View.GONE
+                binding.forecastView.root.visibility = View.GONE
+
+                binding.inProgressView.visibility = View.VISIBLE
+                binding.inProgressText.text = "we are getting the latest forecast"
+            }
+            MainUiState.CannotGetLocation -> {
+                binding.inProgressView.visibility = View.GONE
+                binding.forecastView.root.visibility = View.GONE
+
+                binding.errorView.visibility = View.VISIBLE
+                binding.errorText.text = "we cannot get the user's location"
             }
             is MainUiState.NetworkRequestFailed -> {
-                "network request failed because ${uiState.exception.message}"
+                binding.inProgressView.visibility = View.GONE
+                binding.forecastView.root.visibility = View.GONE
+
+                binding.errorView.visibility = View.VISIBLE
+                binding.errorText.text = "error getting forecast: ${uiState.exception.message}"
+            }
+            is MainUiState.ForecastFound -> {
+                binding.errorView.visibility = View.GONE
+                binding.inProgressView.visibility = View.GONE
+
+                binding.forecastView.root.visibility = View.VISIBLE
             }
         }
     }

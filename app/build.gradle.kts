@@ -17,6 +17,7 @@ android {
         versionName = "1.0"
 
         multiDexEnabled = true
+        vectorDrawables.useSupportLibrary = true
     }
 
     signingConfigs {
@@ -55,11 +56,15 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("com.android.support:appcompat-v7:25.4.0")
+    implementation("com.android.support:recyclerview-v7:25.4.0")
     implementation("androidx.multidex:multidex:2.0.1")
     implementation("com.squareup.okhttp:okhttp:1.6.0")
     implementation("com.google.code.gson:gson:2.8.9")

@@ -11,6 +11,8 @@
         android.support.mediacompat,
         android.support.v4,
         android.support.v7.appcompat,
+        android.support.v7.recyclerview,
+        androidx.viewbinding,
         com.google.android.gms,
         com.google.android.gms.base,
         com.google.android.gms.location,

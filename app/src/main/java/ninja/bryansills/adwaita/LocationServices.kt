@@ -53,9 +53,18 @@ class PlayServicesLocationServices(
         executor.execute {
             var playServicesConnectionCount = 0
 
+            Log.d("BLARG", "Cancel sig is canceled ${cancellationSignal.isCanceled}")
+            Log.d("BLARG", "This is connected ${this.isConnected}")
+            Log.d("BLARG", "Has timed out ${hasTimedOut(playServicesConnectionCount)}")
             while (!cancellationSignal.isCanceled && !this.isConnected && !hasTimedOut(playServicesConnectionCount)) {
+                Log.d("BLARG", "Polling attempt $playServicesConnectionCount")
                 Thread.sleep(PLAY_SERVICES_CONNECTION_POLL_RATE_MILLIS)
                 playServicesConnectionCount++
+            }
+
+            if (hasTimedOut(playServicesConnectionCount)) {
+                callback(null)
+                return@execute
             }
 
             if (cancellationSignal.isCanceled) {
@@ -115,7 +124,7 @@ class PlayServicesLocationServices(
 
     private fun hasTimedOut(playServicesConnectionCount: Int): Boolean {
         val alreadyWaited = playServicesConnectionCount * PLAY_SERVICES_CONNECTION_POLL_RATE_MILLIS
-        return alreadyWaited < PLAY_SERVICES_CONNECTION_TIMEOUT_MILLIS
+        return alreadyWaited > PLAY_SERVICES_CONNECTION_TIMEOUT_MILLIS
     }
 
     companion object {

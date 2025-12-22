@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Adwaita</string>
+    <string name="current_temperature">Current Temperature</string>
 </resources>

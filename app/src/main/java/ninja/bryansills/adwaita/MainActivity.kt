@@ -82,6 +82,13 @@ class MainActivity : AppCompatActivity() {
                 binding.inProgressText.text = "we need permission to access the user's location"
 
             }
+            MainUiState.RequestingLocation -> {
+                binding.errorView.visibility = View.GONE
+                binding.forecastView.root.visibility = View.GONE
+
+                binding.inProgressView.visibility = View.VISIBLE
+                binding.inProgressText.text = "trying to locate the user"
+            }
             is MainUiState.LocationFound -> {
                 binding.errorView.visibility = View.GONE
                 binding.forecastView.root.visibility = View.GONE
@@ -107,7 +114,14 @@ class MainActivity : AppCompatActivity() {
                 binding.errorView.visibility = View.GONE
                 binding.inProgressView.visibility = View.GONE
 
-                binding.forecastView.root.visibility = View.VISIBLE
+                binding.forecastView.apply {
+                    root.visibility = View.VISIBLE
+                    currentView.currentTemperature.text = "77°"
+                    currentView.feelsLike.text = "Feels Like: 77°"
+                    currentView.dailyHigh.text = "Daily High: 84°"
+                    currentView.dailyLow.text = "Daily Low: 74°"
+                    hourlyForecast.adapter = HourlyAdapter(uiState.forecast.hourly)
+                }
             }
         }
     }

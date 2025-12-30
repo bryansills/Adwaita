@@ -9,6 +9,7 @@
     android:layout_marginVertical="8dp">
 
     <TextView
+        android:id="@+id/hourly_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         style="?android:attr/textAppearanceMedium"
@@ -16,6 +17,7 @@
         tools:text="8PM"/>
 
     <TextView
+        android:id="@+id/hourly_status"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -25,13 +27,15 @@
         tools:text="partly cloudy haha super duper longs text this is gonna"/>
 
     <TextView
+        android:id="@+id/hourly_percent_precipitation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         style="?android:attr/textAppearanceMedium"
-        android:text="5%"/>
+        tools:text="5%"/>
 
     <TextView
+        android:id="@+id/hourly_temperature"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"

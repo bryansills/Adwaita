@@ -43,6 +43,8 @@ class MainViewController(
                 val newCancellationSignal = CancellationSignal()
                 cancellationSignal = newCancellationSignal
 
+                updateUiState { MainUiState.RequestingLocation }
+
                 locationServices.getLastLocation(newCancellationSignal) { newLocation: Location? ->
                     if (newLocation != null) {
                         val latitude = newLocation.latitude.toInt()
@@ -111,6 +113,8 @@ class MainViewController(
 
 sealed interface MainUiState {
     data object WaitingForPermission : MainUiState
+
+    data object RequestingLocation : MainUiState
 
     data object CannotGetLocation : MainUiState
 

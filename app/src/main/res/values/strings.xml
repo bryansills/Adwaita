@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">Adwaita</string>
     <string name="current_temperature">Current Temperature</string>
+    <string name="percent_precipitation">%d\%%</string>
+    <string name="temperature">%d°</string>
+    <string name="we_need_permission">We need permission to access the user\'s location</string>
+    <string name="trying_to_locate">Trying to locate the user…</string>
+    <string name="getting_the_latest">We are getting the latest forecast…</string>
+    <string name="cannot_get_location">We cannot get the user\'s location</string>
+    <string name="error_getting">Error getting the current forecast.\n\n$1%s</string>
+    <string name="feels_like_temperature">Feels Like: %d°</string>
+    <string name="daily_high_temperature">Daily High: %d°</string>
+    <string name="daily_low_temperature">Daily Low: %d°</string>
 </resources>

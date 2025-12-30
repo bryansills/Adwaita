@@ -27,7 +27,8 @@ interface LocationServices : LocationPermissions {
 
 class PlayServicesLocationServices(
     context: Context,
-    private val executor: Executor,
+    private val mainThreadExecutor: Executor,
+    private val backgroundThreadExecutor: Executor,
     private val locationPermissions: LocationPermissions
 ) : LocationServices, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private val googleApiClient: GoogleApiClient = GoogleApiClient
@@ -43,26 +44,14 @@ class PlayServicesLocationServices(
 
     private var internalConnectionResult: ConnectionResult? = null
 
-    private val isConnected: Boolean
-        get() = internalConnectionResult == CONNECTED_RESULT
-
     override fun getLastLocation(
         cancellationSignal: CancellationSignal,
         callback: (Location?) -> Unit
     ) {
-        executor.execute {
-            var playServicesConnectionCount = 0
+        backgroundThreadExecutor.execute {
+            val connectionResult = googleApiClient.blockingConnect(PLAY_SERVICES_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 
-            Log.d("BLARG", "Cancel sig is canceled ${cancellationSignal.isCanceled}")
-            Log.d("BLARG", "This is connected ${this.isConnected}")
-            Log.d("BLARG", "Has timed out ${hasTimedOut(playServicesConnectionCount)}")
-            while (!cancellationSignal.isCanceled && !this.isConnected && !hasTimedOut(playServicesConnectionCount)) {
-                Log.d("BLARG", "Polling attempt $playServicesConnectionCount")
-                Thread.sleep(PLAY_SERVICES_CONNECTION_POLL_RATE_MILLIS)
-                playServicesConnectionCount++
-            }
-
-            if (hasTimedOut(playServicesConnectionCount)) {
+            if (!connectionResult.isSuccess) {
                 callback(null)
                 return@execute
             }
@@ -71,26 +60,28 @@ class PlayServicesLocationServices(
                 return@execute
             }
 
-            val lastLocation = GoogleLocationServices.FusedLocationApi.getLastLocation(googleApiClient)
-            if (lastLocation != null && lastLocation.isFresh) {
-                callback(lastLocation)
-                return@execute
+            mainThreadExecutor.execute {
+                val lastLocation = GoogleLocationServices.FusedLocationApi.getLastLocation(googleApiClient)
+                if (lastLocation != null && lastLocation.isFresh) {
+                    callback(lastLocation)
+                    return@execute
+                }
+
+                val cancelableGoogleLocationListener = CancelableGoogleLocationListener(
+                    executor = mainThreadExecutor,
+                    fusedLocationProviderApi = GoogleLocationServices.FusedLocationApi,
+                    googleApiClient = googleApiClient,
+                    callback = callback
+                )
+                GoogleLocationServices.FusedLocationApi.requestLocationUpdates(
+                    googleApiClient,
+                    LocationRequest.create().setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY),
+                    cancelableGoogleLocationListener
+                )
+
+                cancellationSignal.setOnCancelListener(cancelableGoogleLocationListener::cancel)
+                cancelableGoogleLocationListener.startTimeout(GET_LOCATION_TIMEOUT_MILLIS)
             }
-
-            val cancelableGoogleLocationListener = CancelableGoogleLocationListener(
-                executor = executor,
-                fusedLocationProviderApi = GoogleLocationServices.FusedLocationApi,
-                googleApiClient = googleApiClient,
-                callback = callback
-            )
-            GoogleLocationServices.FusedLocationApi.requestLocationUpdates(
-                googleApiClient,
-                LocationRequest.create().setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY),
-                cancelableGoogleLocationListener
-            )
-
-            cancellationSignal.setOnCancelListener(cancelableGoogleLocationListener::cancel)
-            cancelableGoogleLocationListener.startTimeout(GET_LOCATION_TIMEOUT_MILLIS)
         }
     }
 
@@ -122,15 +113,9 @@ class PlayServicesLocationServices(
         return locationPermissions.wasGrantedPermission(permissions, grantResults)
     }
 
-    private fun hasTimedOut(playServicesConnectionCount: Int): Boolean {
-        val alreadyWaited = playServicesConnectionCount * PLAY_SERVICES_CONNECTION_POLL_RATE_MILLIS
-        return alreadyWaited > PLAY_SERVICES_CONNECTION_TIMEOUT_MILLIS
-    }
-
     companion object {
-        private const val PLAY_SERVICES_CONNECTION_TIMEOUT_MILLIS = 15_000L
         private const val GET_LOCATION_TIMEOUT_MILLIS = 15_000L
-        private const val PLAY_SERVICES_CONNECTION_POLL_RATE_MILLIS = 250L
+        private const val PLAY_SERVICES_CONNECTION_TIMEOUT_SECONDS = 15L
 
         private val CONNECTED_RESULT = ConnectionResult(ConnectionResult.SUCCESS)
     }

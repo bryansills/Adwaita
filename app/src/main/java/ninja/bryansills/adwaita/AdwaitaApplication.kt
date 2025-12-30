@@ -23,7 +23,12 @@ class AdwaitaApplication : Application() {
 
         val locationPermissions: LocationPermissions = DefaultLocationPermissions(this)
         val locationServices: LocationServices = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            PlayServicesLocationServices(this, mainThreadExecutor, locationPermissions)
+            PlayServicesLocationServices(
+                context = this,
+                mainThreadExecutor = mainThreadExecutor,
+                backgroundThreadExecutor = backgroundExecutor,
+                locationPermissions = locationPermissions
+            )
         } else {
             AospLocationServices(
                 locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager,

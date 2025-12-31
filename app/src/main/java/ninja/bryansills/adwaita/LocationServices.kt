@@ -221,14 +221,18 @@ class AospLocationServices(
             Log.d("BLARG", "Got a new location $newLocation")
             if (newLocation != null) {
                 callback(newLocation)
+                lastLocation = newLocation
                 internalCancellationSignals.forEach { it.cancel() }
             } else {
                 internalCancellationCount++
                 Log.d("BLARG", "Null emitted $internalCancellationCount times")
 
                 if (internalCancellationCount == bestProviders.size) {
-                    Log.d("BLARG", "Giving up")
-                    callback(null)
+//                    Log.d("BLARG", "Giving up")
+//                    callback(null)
+
+                    Log.d("BLARG", "Giving up and giving a fake location :shrug:")
+                    callback(FakedLocation)
                 }
             }
         }
@@ -258,6 +262,15 @@ class AospLocationServices(
         grantResults: IntArray
     ): Boolean {
         return locationPermissions.wasGrantedPermission(permissions, grantResults)
+    }
+
+    companion object {
+        val FakedLocation = run {
+            val fake = Location("FAKE_PROVIDER")
+            fake.latitude = 41.0
+            fake.longitude = -87.0
+            fake
+        }
     }
 }
 

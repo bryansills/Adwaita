@@ -4,13 +4,13 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.toLocalDateTime
 import ninja.bryansills.adwaita.databinding.ItemHourBinding
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.hours
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.time.ExperimentalTime
 
 class HourlyAdapter(private val hours: List<HourlyWeather>) : RecyclerView.Adapter<HourlyViewHolder>() {
@@ -38,9 +38,9 @@ class HourlyAdapter(private val hours: List<HourlyWeather>) : RecyclerView.Adapt
 class HourlyViewHolder(private val binding: ItemHourBinding) : RecyclerView.ViewHolder(binding.root) {
     @OptIn(ExperimentalTime::class)
     fun bind(weather: HourlyWeather) {
-        val offsetInstant = Clock.System.now() + weather.offset_hour.hours
-        val offsetTime = offsetInstant.toLocalDateTime(TimeZone.currentSystemDefault())
-        binding.hourlyTime.text = HourFormatter.format(offsetTime.time)
+        val offsetInst = Instant.now() + Duration.ofHours(weather.offset_hour.toLong())
+        val offsetLocalTime = LocalTime.ofInstant(offsetInst, ZoneId.systemDefault())
+        binding.hourlyTime.text = LocalTimeFormatter.format(offsetLocalTime)
 
         binding.hourlyStatus.text = weather.code
 
@@ -55,7 +55,4 @@ class HourlyViewHolder(private val binding: ItemHourBinding) : RecyclerView.View
     }
 }
 
-private val HourFormatter = LocalTime.Format {
-    amPmHour(padding = Padding.NONE)
-    amPmMarker(am = "AM", pm = "PM")
-}
+private val LocalTimeFormatter = DateTimeFormatter.ofPattern("ha", Locale.getDefault())

@@ -5,11 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import ninja.bryansills.adwaita.databinding.ItemHourBinding
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
 import kotlin.time.ExperimentalTime
 
@@ -38,9 +35,9 @@ class HourlyAdapter(private val hours: List<HourlyWeather>) : RecyclerView.Adapt
 class HourlyViewHolder(private val binding: ItemHourBinding) : RecyclerView.ViewHolder(binding.root) {
     @OptIn(ExperimentalTime::class)
     fun bind(weather: HourlyWeather) {
-        val offsetInst = Instant.now() + Duration.ofHours(weather.offset_hour.toLong())
-        val offsetLocalTime = LocalTime.ofInstant(offsetInst, ZoneId.systemDefault())
-        binding.hourlyTime.text = LocalTimeFormatter.format(offsetLocalTime)
+        val currentDate = Calendar.getInstance()
+        currentDate.add(Calendar.HOUR, weather.offset_hour)
+        binding.hourlyTime.text = SimpleFormatter.format(currentDate.time)
 
         binding.hourlyStatus.text = weather.code
 
@@ -55,4 +52,4 @@ class HourlyViewHolder(private val binding: ItemHourBinding) : RecyclerView.View
     }
 }
 
-private val LocalTimeFormatter = DateTimeFormatter.ofPattern("ha", Locale.getDefault())
+private val SimpleFormatter = SimpleDateFormat("ha", Locale.US)
